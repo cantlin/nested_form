@@ -4,6 +4,10 @@ module NestedForm
     #
     #   f.link_to_add("Add Task", :tasks)
     #
+    # You can also provide a model instance.
+    #
+    #  f.link_to_add("Add Task", Task.new)
+    #
     # You can pass HTML options in a hash at the end and a block for the content.
     #
     #   <%= f.link_to_add(:tasks, :class => "add_task", :href => new_task_path) do %>
@@ -14,15 +18,21 @@ module NestedForm
     def link_to_add(*args, &block)
       options = args.extract_options!.symbolize_keys
       association = args.pop
+      if association.is_a?(Symbol) || association.is_a?(String)
+        association_key = association.to_sym
+        association_obj = self.object.class.reflect_on_association(association).klass.new
+      else
+        association_key = association.class.name.pluralize.downcase.to_sym
+        association_obj = association
+      end
       options[:class] = [options[:class], "add_nested_fields"].compact.join(" ")
       options["data-association"] = association
       args << (options.delete(:href) || "javascript:void(0)")
       args << options
       @fields ||= {}
-      @template.after_nested_form(association) do
-        model_object = object.class.reflect_on_association(association).klass.new
-        output = %Q[<div id="#{association}_fields_blueprint" style="display: none">].html_safe
-        output << fields_for(association, model_object, :child_index => "new_#{association}", &@fields[association])
+      @template.after_nested_form(association_key) do
+        output = %Q[<div id="#{association_key}_fields_blueprint" style="display: none">].html_safe
+        output << fields_for(association_key, association_obj, :child_index => "new_#{association_key}", &@fields[association])
         output.safe_concat('</div>')
         output
       end
