@@ -26,7 +26,7 @@ module NestedForm
         association_obj = association
       end
       options[:class] = [options[:class], "add_nested_fields"].compact.join(" ")
-      options["data-association"] = association
+      options["data-association"] = association_key
       args << (options.delete(:href) || "javascript:void(0)")
       args << options
       @fields ||= {}
